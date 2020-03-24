@@ -1,3 +1,5 @@
 # Visualizing COVID-19 Growth with Plotly Dash
 
-Deployed to Heroku: [Click Here](https://dash-covid-19.herokuapp.com/)
+Deployed to Heroku at: [https://dash-covid-19.herokuapp.com/](https://dash-covid-19.herokuapp.com/)
+
+(Work in progress)
