@@ -1,12 +1,11 @@
 import os
-
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
-
 import pandas as pd
-
 import plotly.express as px
+
+from dash.dependencies import Input, Output
 
 # initialize app
 
@@ -79,13 +78,17 @@ app.layout = html.Div(
                                             df_confirmed["Country/Region"].unique()
                                         )
                                     ],
-                                    value = 'US'
+                                    value="US",
                                 ),
-                                html.Div(id="dd-output-container"),
+                                html.P(id="dd-output"),
                             ],
                         ),
                     ],
-                )
+                ),
+                html.Div(
+                    className="eight columns div-for-charts bg-grey",
+                    children=[dcc.Graph(id="map-graph"), dcc.Graph(id="line")],
+                ),
             ],
         )
     ]
@@ -93,21 +96,25 @@ app.layout = html.Div(
 
 # callbacks
 
-
+# update selected Country
 @app.callback(
-    dash.dependencies.Output("dd-output-container", "children"),
-    [dash.dependencies.Input("country-picker", "value")],
+    Output("dd-output", "children"), [Input("country-picker", "value")],
 )
 def update_output(value):
     return f"You have selected {value}"
 
 
-# @app.callback(
-#     dash.dependencies.Output("display-value", "children"),
-#     [dash.dependencies.Input("dropdown", "value")],
-# )
-# def display_value(value):
-#     return 'You have selected "{}"'.format(value)
+# update line graph for selected country
+@app.callback(Output("line", "figure"), [Input("country-picker", "value")])
+def update_line(country):
+    df_country = (
+        df_confirmed[df_confirmed["Country/Region"] == country]
+        .iloc[:, 4:]
+        .T.reset_index()
+    )
+    df_country.columns = ["Date", "Confirmed"]
+    print(country)
+    return px.line(data_frame=df_country, x="Date", y="Confirmed")
 
 
 # run app
