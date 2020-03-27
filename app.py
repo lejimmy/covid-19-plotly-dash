@@ -36,6 +36,8 @@ df_td = (
     .rename(columns={"index": "Date", 0: "Deaths"})
 )
 
+df_countries = df_confirmed.groupby(["Country/Region"]).sum().iloc[:, -1].reset_index()
+
 # app layout
 
 graph_c = html.Div(
@@ -91,11 +93,12 @@ app.layout = html.Div(
                         dcc.Graph(
                             id="map-graph",
                             figure=px.choropleth(
-                                data_frame=df_confirmed,
+                                data_frame=df_countries,
                                 locations="Country/Region",
                                 hover_name="Country/Region",
-                                color=df_confirmed.columns[-1],
+                                color=df_countries.columns[-1],
                                 locationmode="country names",
+                                color_continuous_scale=px.colors.sequential.OrRd,
                             ),
                         ),
                         dcc.Graph(id="line"),
@@ -122,7 +125,8 @@ def update_line(country):
     df_country = (
         df_confirmed[df_confirmed["Country/Region"] == country]
         .iloc[:, 4:]
-        .T.reset_index()
+        .T.sum(axis=1)
+        .reset_index()
     )
     df_country.columns = ["Date", "Confirmed"]
     return px.line(data_frame=df_country, x="Date", y="Confirmed")
