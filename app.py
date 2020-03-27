@@ -8,10 +8,7 @@ import plotly.express as px
 from dash.dependencies import Input, Output
 
 # initialize app
-
-external_stylesheets = ["https://codepen.io/chriddyp/pen/bWLwgP.css"]
-
-app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
+app = dash.Dash(__name__)
 
 server = app.server
 
@@ -67,7 +64,7 @@ app.layout = html.Div(
                 html.Div(
                     className="four columns div-user-controls",
                     children=[
-                        html.H2("Global Coronavirus/COVID-19 Cases"),
+                        html.H2("Global Coronavirus Cases"),
                         html.P("Select a country below."),
                         html.Div(
                             className="div-for-dropdown",
@@ -99,9 +96,11 @@ app.layout = html.Div(
                                 color=df_countries.columns[-1],
                                 locationmode="country names",
                                 color_continuous_scale=px.colors.sequential.OrRd,
+                                template = 'plotly_dark'
                             ),
                         ),
-                        dcc.Graph(id="line"),
+                        dcc.Graph(id="line")
+
                     ],
                 ),
             ],
@@ -116,7 +115,7 @@ app.layout = html.Div(
     Output("dd-output", "children"), [Input("country-picker", "value")],
 )
 def update_output(value):
-    return f"You have selected {value}"
+    return ""
 
 
 # update line graph for selected country
@@ -129,7 +128,7 @@ def update_line(country):
         .reset_index()
     )
     df_country.columns = ["Date", "Confirmed"]
-    return px.line(data_frame=df_country, x="Date", y="Confirmed")
+    return px.line(data_frame=df_country, x="Date", y="Confirmed", template = 'plotly_dark')
 
 
 # run app
