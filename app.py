@@ -87,7 +87,19 @@ app.layout = html.Div(
                 ),
                 html.Div(
                     className="eight columns div-for-charts bg-grey",
-                    children=[dcc.Graph(id="map-graph"), dcc.Graph(id="line")],
+                    children=[
+                        dcc.Graph(
+                            id="map-graph",
+                            figure=px.choropleth(
+                                data_frame=df_confirmed,
+                                locations="Country/Region",
+                                hover_name="Country/Region",
+                                color=df_confirmed.columns[-1],
+                                locationmode="country names",
+                            ),
+                        ),
+                        dcc.Graph(id="line"),
+                    ],
                 ),
             ],
         )
@@ -113,7 +125,6 @@ def update_line(country):
         .T.reset_index()
     )
     df_country.columns = ["Date", "Confirmed"]
-    print(country)
     return px.line(data_frame=df_country, x="Date", y="Confirmed")
 
 
