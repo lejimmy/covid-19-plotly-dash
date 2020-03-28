@@ -6,7 +6,7 @@ import dash_html_components as html
 import pandas as pd
 import plotly.express as px
 
-from dash.dependencies import Input, Output
+from dash.dependencies import Input, Output, State
 
 # initialize app
 app = dash.Dash(__name__)
@@ -16,7 +16,8 @@ server = app.server
 # load data
 
 df = pd.read_csv(
-    "https://raw.githubusercontent.com/datasets/covid-19/master/data/countries-aggregated.csv", parse_dates = ['Date']
+    "https://raw.githubusercontent.com/datasets/covid-19/master/data/countries-aggregated.csv",
+    parse_dates=["Date"],
 )
 
 # Datetime string feature for animation frames
@@ -49,10 +50,10 @@ app.layout = html.Div(
                                 ),
                                 html.P(id="dd-output"),
                                 dcc.Markdown(
-                                    children = [
-                                        'Source: [DataHub](https://datahub.io/core/covid-19)'
+                                    children=[
+                                        "Source: [DataHub](https://datahub.io/core/covid-19)"
                                     ]
-                                )
+                                ),
                             ],
                         ),
                     ],
@@ -90,10 +91,22 @@ app.layout = html.Div(
 def update_output(value):
     return ""
 
+# if country selected, clear click data
+@app.callback(Output("map-graph", "clickData"), [Input("country-picker", "value")])
+def update_selected_data(country):
+    if country:
+        return None
 
 # update line graph for selected country
-@app.callback(Output("line", "figure"), [Input("country-picker", "value")])
-def update_line(country):
+@app.callback(
+    Output("line", "figure"),
+    [Input("country-picker", "value"), Input("map-graph", "clickData")],
+)
+def update_line(country, choro_click):
+
+    if choro_click != None:
+        country = choro_click["points"][0]["location"]
+
     return px.line(
         data_frame=df[df["Country"] == country],
         x="Date",
