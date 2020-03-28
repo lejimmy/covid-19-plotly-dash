@@ -91,11 +91,13 @@ app.layout = html.Div(
 def update_output(value):
     return ""
 
+
 # if country selected, clear click data
 @app.callback(Output("map-graph", "clickData"), [Input("country-picker", "value")])
 def update_selected_data(country):
     if country:
         return None
+
 
 # update line graph for selected country
 @app.callback(
