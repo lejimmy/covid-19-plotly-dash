@@ -1,5 +1,6 @@
 import os
 import dash
+import datetime
 import dash_core_components as dcc
 import dash_html_components as html
 import pandas as pd
@@ -14,46 +15,18 @@ server = app.server
 
 # load data
 
-df_confirmed = pd.read_csv(
-    "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv"
-)
-df_deaths = pd.read_csv(
-    "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_global.csv"
+df = pd.read_csv(
+    "https://raw.githubusercontent.com/datasets/covid-19/master/data/countries-aggregated.csv", parse_dates = ['Date']
 )
 
-df_tc = (
-    pd.DataFrame(df_confirmed.iloc[:, 4:].sum())
-    .reset_index()
-    .rename(columns={"index": "Date", 0: "Confirmed"})
-)
+# Datetime string feature for animation frames
+df["Date_Str"] = df["Date"].dt.strftime("%m-%d")
 
-df_td = (
-    pd.DataFrame(df_deaths.iloc[:, 4:].sum())
-    .reset_index()
-    .rename(columns={"index": "Date", 0: "Deaths"})
-)
-
-df_countries = df_confirmed.groupby(["Country/Region"]).sum().iloc[:, -1].reset_index()
+dropdown_options = [
+    {"label": country, "value": country} for country in sorted(df["Country"].unique())
+]
 
 # app layout
-
-graph_c = html.Div(
-    [
-        dcc.Graph(
-            id="graph_confirmed",
-            figure=px.line(data_frame=df_tc, x="Date", y="Confirmed"),
-        )
-    ]
-)
-
-graph_d = html.Div(
-    [
-        dcc.Graph(
-            id="graph_deaths", figure=px.line(data_frame=df_td, x="Date", y="Deaths")
-        )
-    ]
-)
-
 
 app.layout = html.Div(
     children=[
@@ -71,15 +44,15 @@ app.layout = html.Div(
                             children=[
                                 dcc.Dropdown(
                                     id="country-picker",
-                                    options=[
-                                        {"label": country, "value": country}
-                                        for country in sorted(
-                                            df_confirmed["Country/Region"].unique()
-                                        )
-                                    ],
+                                    options=dropdown_options,
                                     value="US",
                                 ),
                                 html.P(id="dd-output"),
+                                dcc.Markdown(
+                                    children = [
+                                        'Source: [DataHub](https://datahub.io/core/covid-19)'
+                                    ]
+                                )
                             ],
                         ),
                     ],
@@ -90,17 +63,17 @@ app.layout = html.Div(
                         dcc.Graph(
                             id="map-graph",
                             figure=px.choropleth(
-                                data_frame=df_countries,
-                                locations="Country/Region",
-                                hover_name="Country/Region",
-                                color=df_countries.columns[-1],
+                                data_frame=df[df["Date"] >= pd.Timestamp(2020, 3, 1)],
+                                locations="Country",
+                                hover_name="Country",
+                                color="Confirmed",
                                 locationmode="country names",
-                                color_continuous_scale=px.colors.sequential.OrRd,
-                                template = 'plotly_dark'
+                                color_continuous_scale=px.colors.sequential.Reds,
+                                template="plotly_dark",
+                                animation_frame="Date_Str",
                             ),
                         ),
-                        dcc.Graph(id="line")
-
+                        dcc.Graph(id="line"),
                     ],
                 ),
             ],
@@ -121,14 +94,12 @@ def update_output(value):
 # update line graph for selected country
 @app.callback(Output("line", "figure"), [Input("country-picker", "value")])
 def update_line(country):
-    df_country = (
-        df_confirmed[df_confirmed["Country/Region"] == country]
-        .iloc[:, 4:]
-        .T.sum(axis=1)
-        .reset_index()
+    return px.line(
+        data_frame=df[df["Country"] == country],
+        x="Date",
+        y="Confirmed",
+        template="plotly_dark",
     )
-    df_country.columns = ["Date", "Confirmed"]
-    return px.line(data_frame=df_country, x="Date", y="Confirmed", template = 'plotly_dark')
 
 
 # run app
